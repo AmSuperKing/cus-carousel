@@ -245,12 +245,14 @@ const startTimer = () => {
   timer = setInterval(playSlides, props.interval);
 };
 const pauseTimer = () => {
-  clearInterval(timer);
+  if (timer) clearInterval(timer);
   timer = undefined;
 };
 const resetTimer = () => {
-  pauseTimer();
-  startTimer();
+  if (props.pauseOnHover && !isHovering.value) {
+    pauseTimer();
+    startTimer();
+  }
 };
 
 const handleMouseEnter = () => {
