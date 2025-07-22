@@ -18,7 +18,7 @@ defineOptions({
   name: 'CusCarouselItem',
 });
 
-export interface CarouselItemProps {
+interface CarouselItemProps {
   readonly label?: string | number;
   readonly name?: string;
 }
@@ -116,7 +116,7 @@ const processStyle = () => {
     // Previous and Next cards on the sides
     const sign = offset > 0 ? 1 : -1;
     // This formula positions the side cards correctly
-    translate.value = context?.isCardMode.value ? sign * (scrollDistance / 2 - cardWidth / 2 + cardWidth * (1 - (context.cardScale || CARD_SCALE)) / 2) : (selfIndex.value - context!.activeIndex.value) * scrollDistance;
+    translate.value = context?.isCardMode.value ? sign * (scrollDistance / 2 - cardWidth / 2 + cardWidth * (1 - (context.cardScale || CARD_SCALE)) / 2) : sign * scrollDistance;
 
     scale.value = context?.isCardMode.value ? (context.cardScale || CARD_SCALE) : 1;
     zIndex.value = 1;
@@ -139,6 +139,8 @@ const processStyle = () => {
           translate.value = sign * (scrollDistance / 2 - cardWidth / 2 + cardWidth * (1 - (context.cardScale || CARD_SCALE)) / 2);
         }
       }
+    } else {
+      translate.value = sign * scrollDistance
     }
 
     scale.value = context?.isCardMode.value ? (context.cardScale || CARD_SCALE) : 1;
