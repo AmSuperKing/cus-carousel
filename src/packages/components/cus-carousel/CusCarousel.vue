@@ -69,7 +69,7 @@ defineOptions({
  * @param pauseOnHover 鼠标悬浮时暂停自动切换
  */
 
-export interface CarouselProps {
+interface CarouselProps {
   height?: string;
   initialIndex?: number;
   trigger?: 'click' | 'hover';
@@ -96,6 +96,11 @@ interface CarouselItem {
   uid: string | number | symbol;
   props: CarouselItemProps;
 }
+
+type ThrottleOptions = {
+  leading?: boolean;  // 是否立即执行第一次
+  trailing?: boolean; // 是否执行最后一次调用
+};
 
 const props = withDefaults(defineProps<CarouselProps>(), {
   height: '300px',
@@ -154,7 +159,54 @@ const indicatorsClasses = computed(() => ({
   'cus-carousel__indicators--labels': hasLabel.value,
 }));
 
+const THROTTLE_TIME = 300;
+
 // --- METHODS ---
+function throttle<T extends (...args: unknown[]) => void>(
+  func: T,
+  limit: number,
+  options: ThrottleOptions = {}
+): T {
+  const { leading = true, trailing = true } = options;
+
+  let lastRan: number | null = null;
+  let lastFunc: number | null = null;
+  let lastThis: unknown;
+  let lastArgs: unknown[];
+
+  function invokeFunc(time: number) {
+    lastRan = time;
+    func.apply(lastThis, lastArgs);
+    lastFunc = null;
+  }
+
+  return function (this: unknown, ...args: unknown[]) {
+    const now = Date.now();
+    const elapsed = lastRan === null ? limit : now - lastRan;
+
+    // eslint-disable-next-line @typescript-eslint/no-this-alias
+    lastThis = this;
+    lastArgs = args;
+
+    if (lastRan === null && !leading) {
+      lastRan = now;
+    }
+
+    if (elapsed >= limit) {
+      if (lastFunc !== null) {
+        clearTimeout(lastFunc);
+        lastFunc = null;
+      }
+      invokeFunc(now);
+    } else if (trailing && !lastFunc) {
+      lastFunc = window.setTimeout(() => {
+        invokeFunc(now);
+      }, limit - elapsed);
+    }
+  } as T;
+}
+
+
 const addItem = (item: CarouselItem) => {
   items.value.push(item);
 };
@@ -205,19 +257,23 @@ const handleMouseEnter = () => {
   isHovering.value = true;
   if (props.pauseOnHover) pauseTimer();
 };
+
 const handleMouseLeave = () => {
   isHovering.value = false;
   resetTimer();
 };
+
 const handleIndicatorClick = (index: number) => {
   setActiveItem(index);
 };
-const throttledIndicatorHover = (index: number) => {
-  if (props.trigger === 'hover') setActiveItem(index);
-};
-const throttledArrowClick = (index: number) => {
-  setActiveItem(index);
-};
+
+const throttledArrowClick = throttle((index) => {
+  setActiveItem(index as number);
+}, THROTTLE_TIME, { trailing: true });
+
+const throttledIndicatorHover = throttle((index) => {
+  if (props.trigger === 'hover') setActiveItem(index as number);
+}, THROTTLE_TIME);
 
 // --- LIFECYCLE & WATCHERS ---
 onMounted(() => {
