@@ -1,6 +1,6 @@
 {
   "name": "cus-carousel",
-  "version": "1.0.3",
+  "version": "1.0.4",
   "description": "A Carousel Vue 3 component with TypeScript and SCSS built with Vite",
   "main": "dist/cus-carousel.umd.js",
   "module": "dist/cus-carousel.es.js",
